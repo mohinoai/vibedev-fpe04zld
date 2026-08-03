@@ -2,6 +2,7 @@
  * @file Pure domain logic — no DOM, no storage, no side effects. Every mutation
  * helper takes the current `Person[]` and returns a new graph (never mutates).
  * The same normalization validates new data and data hydrated from storage.
+ * Function argument/return shapes are the typedefs below.
  */
 
 /** @typedef {'idea' | 'purchased' | 'given'} GiftStatus */
@@ -33,21 +34,19 @@ export const EMPTY_SUMMARY = { idea: 0, purchased: 0, given: 0 };
 /** Max characters kept for any text field — guards layout and storage size. */
 export const MAX_TEXT_LENGTH = 200;
 
-/** Unique id (prefers `crypto.randomUUID`, else time + random). @returns {string} */
+/** Unique id (prefers `crypto.randomUUID`, else time + random). */
 export function createId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Coerce to string, collapse whitespace, trim, cap length. @param {unknown} value @returns {string} */
+/** Coerce to string, collapse whitespace, trim, cap length. */
 export function sanitizeText(value) {
   if (typeof value !== 'string') return '';
   return value.replace(/\s+/g, ' ').trim().slice(0, MAX_TEXT_LENGTH);
 }
 
-/** @typedef {{ ok: true, value: number | null } | { ok: false, error: string }} PriceResult */
-
-/** Parse a price: empty/nullish→null (optional); rejects non-numeric/negative. @param {unknown} value @returns {PriceResult} */
+/** Parse a price: empty/nullish→null (optional); rejects non-numeric/negative. Returns `{ok,value}` or `{ok:false,error}`. */
 export function parsePrice(value) {
   if (value === null || value === undefined) return { ok: true, value: null };
   const raw = String(value).trim();
@@ -58,12 +57,12 @@ export function parsePrice(value) {
   return { ok: true, value: n };
 }
 
-/** Next status; looping keeps a mis-tap reversible with one control. @param {GiftStatus} status @returns {GiftStatus} */
+/** Next status; looping keeps a mis-tap reversible with one control. */
 export function cycleGiftStatus(status) {
   return GIFT_STATUSES[(GIFT_STATUSES.indexOf(status) + 1) % GIFT_STATUSES.length];
 }
 
-/** Count gifts per status; defensive against non-arrays/malformed. @param {GiftIdea[]} giftIdeas @returns {StatusSummary} */
+/** Count gifts per status; defensive against non-arrays/malformed. Returns a {@link StatusSummary}. */
 export function summarizeGifts(giftIdeas) {
   const summary = { ...EMPTY_SUMMARY };
   if (!Array.isArray(giftIdeas)) return summary;
@@ -73,7 +72,7 @@ export function summarizeGifts(giftIdeas) {
   return summary;
 }
 
-/** Build a valid GiftIdea, or null when missing a title. @param {any} raw @returns {GiftIdea | null} */
+/** Build a valid {@link GiftIdea}, or null when missing a title. Shared by creation + storage hydration. */
 export function normalizeGift(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const title = sanitizeText(raw.title);
@@ -88,7 +87,7 @@ export function normalizeGift(raw) {
   };
 }
 
-/** Build a valid Person (nested gifts normalized), or null when missing a name. @param {any} raw @returns {Person | null} */
+/** Build a valid {@link Person} (nested gifts normalized), or null when missing a name. */
 export function normalizePerson(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const name = sanitizeText(raw.name);
@@ -97,7 +96,7 @@ export function normalizePerson(raw) {
   return { id: typeof raw.id === 'string' && raw.id ? raw.id : createId(), name, giftIdeas };
 }
 
-/** Normalize a people array; reports partial recovery. @param {any} raw @returns {{ people: Person[], recovered: boolean }} */
+/** Normalize a people array; `recovered` flags a partial recovery. Returns `{ people, recovered }`. */
 export function normalizePeople(raw) {
   if (!Array.isArray(raw)) return { people: [], recovered: raw != null };
   const people = [];
@@ -110,20 +109,20 @@ export function normalizePeople(raw) {
   return { people, recovered: dropped > 0 };
 }
 
-/* Mutation helpers below are immutable — each returns a new Person[] (same ref on no-op). */
+/* Mutation helpers below are immutable: each takes and returns `Person[]` (same ref on no-op). */
 
-/** Append a new person; no-op when the name is blank. @param {Person[]} people @param {string} name @returns {Person[]} */
+/** Append a new person; no-op when the name is blank. */
 export function addPerson(people, name) {
   const person = normalizePerson({ name, giftIdeas: [] });
   return person ? [...people, person] : people;
 }
 
-/** Remove a person and cascade-delete all their gifts. @param {Person[]} people @param {string} personId @returns {Person[]} */
+/** Remove a person and cascade-delete all their gifts. */
 export function removePerson(people, personId) {
   return people.filter((person) => person.id !== personId);
 }
 
-/** Add a gift (always starts at 'idea'); no-op without a valid title. @param {Person[]} people @param {string} personId @param {Partial<GiftIdea>} payload @returns {Person[]} */
+/** Add a gift under a person (always starts at 'idea'); no-op without a valid title. */
 export function addGiftIdea(people, personId, payload) {
   const gift = normalizeGift({ ...payload, id: undefined, status: 'idea' });
   if (!gift) return people;
@@ -132,7 +131,7 @@ export function addGiftIdea(people, personId, payload) {
   );
 }
 
-/** Edit a gift (patch merged + re-validated, id kept; invalid merge = unchanged). @param {Person[]} people @param {string} personId @param {string} giftId @param {Partial<GiftIdea>} patch @returns {Person[]} */
+/** Edit a gift: patch merged + re-validated, id kept; an invalid merge leaves it unchanged. */
 export function updateGiftIdea(people, personId, giftId, patch) {
   return people.map((person) => {
     if (person.id !== personId) return person;
@@ -145,7 +144,7 @@ export function updateGiftIdea(people, personId, giftId, patch) {
   });
 }
 
-/** Remove a single gift from a person. @param {Person[]} people @param {string} personId @param {string} giftId @returns {Person[]} */
+/** Remove a single gift from a person. */
 export function removeGiftIdea(people, personId, giftId) {
   return people.map((person) =>
     person.id === personId
@@ -154,7 +153,7 @@ export function removeGiftIdea(people, personId, giftId) {
   );
 }
 
-/** Advance a single gift's status to the next in the cycle. @param {Person[]} people @param {string} personId @param {string} giftId @returns {Person[]} */
+/** Advance a single gift's status to the next in the cycle. */
 export function cycleGiftIdeaStatus(people, personId, giftId) {
   return people.map((person) => {
     if (person.id !== personId) return person;

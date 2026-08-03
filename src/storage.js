@@ -10,9 +10,8 @@ import { normalizePeople } from './domain/vault.js';
 export const STORAGE_KEY = 'gift-idea-vault:v1';
 
 /** @typedef {'ok' | 'empty' | 'recovered' | 'corrupt' | 'blocked'} LoadStatus */
-/** @typedef {{ people: import('./domain/vault.js').Person[], status: LoadStatus }} LoadResult */
 
-/** @returns {LoadResult} */
+/** Load + normalize the vault. Returns `{ people, status }`. */
 export function loadPeople() {
   let raw;
   try {
@@ -34,10 +33,7 @@ export function loadPeople() {
   return { people, status: recovered ? 'recovered' : 'ok' };
 }
 
-/**
- * @param {import('./domain/vault.js').Person[]} people
- * @returns {{ ok: true } | { ok: false, error: 'blocked' }}
- */
+/** Persist the full people structure. Returns `{ ok }` or `{ ok:false, error:'blocked' }`. */
 export function savePeople(people) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
