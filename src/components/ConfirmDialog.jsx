@@ -1,10 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-/**
- * Modal confirmation for the destructive "delete person" action. Unlike a plain
- * gift delete, this spells out the cascade (person + N gift ideas) and requires
- * an explicit confirm. Escape and backdrop click cancel; focus lands on Cancel.
- */
 export default function ConfirmDialog({ open, person, onConfirm, onCancel }) {
   const cancelRef = useRef(null);
 

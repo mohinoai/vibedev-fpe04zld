@@ -2,29 +2,10 @@ import { useState } from 'react';
 import StatusBadge from './StatusBadge.jsx';
 import GiftForm from './GiftForm.jsx';
 
-/**
- * Format an optional price for display. Currency-neutral on purpose — the brief
- * stores a bare number and never specifies a currency.
- * @param {number | null} value
- * @returns {string | null}
- */
-function formatPrice(value) {
-  if (value == null) return null;
-  return `Est. ${value.toLocaleString()}`;
-}
+// Currency-neutral: the brief stores a bare number, never a currency.
+const formatPrice = (value) => (value == null ? null : `Est. ${value.toLocaleString()}`);
+const isHttpUrl = (value) => /^https?:\/\//i.test(value);
 
-/**
- * True when the string is an http(s) URL we can safely turn into a link.
- * @param {string} value
- * @returns {boolean}
- */
-function isHttpUrl(value) {
-  return /^https?:\/\//i.test(value);
-}
-
-/**
- * A single gift idea. Toggles between a read view and an inline edit form.
- */
 export default function GiftCard({ gift, onCycle, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
 

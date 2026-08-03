@@ -2,6 +2,5 @@ node_modules
 dist
 *.local
 .DS_Store
-
-# Kept local — not part of the shipped project
+.claude/
 PRD-gift-idea-vault.md

@@ -1,80 +1,51 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  addPerson,
-  removePerson,
-  addGiftIdea,
-  updateGiftIdea,
-  removeGiftIdea,
-  cycleGiftIdeaStatus,
+  addPerson, removePerson, addGiftIdea, updateGiftIdea, removeGiftIdea, cycleGiftIdeaStatus,
 } from './domain/vault.js';
 import { loadPeople, savePeople } from './storage.js';
 import PersonSection from './components/PersonSection.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
 import StorageBanner from './components/StorageBanner.jsx';
 
-/**
- * Root application component.
- *
- * Owns the single source of truth (`people`) and delegates every mutation to the
- * pure domain helpers in {@link module:domain/vault}. Persistence is a side
- * effect that mirrors state to localStorage after each change.
- */
+// Root component. Owns the single source of truth (`people`) and routes every
+// mutation through the pure domain helpers; an effect mirrors it to localStorage.
 export default function App() {
   /** @type {import('./domain/vault.js').Person[]} single source of truth. */
   const [people, setPeople] = useState([]);
   const [loadStatus, setLoadStatus] = useState('loading');
   const [saveBlocked, setSaveBlocked] = useState(false);
   const [name, setName] = useState('');
-  /** Person queued for the destructive delete confirmation, or null. */
-  const [pendingDelete, setPendingDelete] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null); // person queued for delete confirm
 
-  // Hydrate once from storage. `loadStatus === 'loading'` guarantees at least
-  // one painted frame with a real visible loading indicator before data lands.
+  // Hydrate once; the 'loading' status guarantees a visible loading frame first.
   useEffect(() => {
     const result = loadPeople();
     setPeople(result.people);
     setLoadStatus(result.status);
   }, []);
 
-  // Mirror state to storage after every change (but not during initial load).
+  // Mirror to storage after every change (not during initial load).
   useEffect(() => {
     if (loadStatus === 'loading') return;
-    const result = savePeople(people);
-    setSaveBlocked(!result.ok);
+    setSaveBlocked(!savePeople(people).ok);
   }, [people, loadStatus]);
 
-  const handleAddPerson = useCallback(
-    (event) => {
-      event.preventDefault();
-      const trimmed = name.trim();
-      if (!trimmed) return;
-      setPeople((prev) => addPerson(prev, trimmed));
-      setName('');
-    },
-    [name],
-  );
-
-  const handleAddGift = useCallback((personId, payload) => {
-    setPeople((prev) => addGiftIdea(prev, personId, payload));
-  }, []);
-
-  const handleUpdateGift = useCallback((personId, giftId, payload) => {
-    setPeople((prev) => updateGiftIdea(prev, personId, giftId, payload));
-  }, []);
-
-  const handleDeleteGift = useCallback((personId, giftId) => {
-    setPeople((prev) => removeGiftIdea(prev, personId, giftId));
-  }, []);
-
-  const handleCycleGift = useCallback((personId, giftId) => {
-    setPeople((prev) => cycleGiftIdeaStatus(prev, personId, giftId));
-  }, []);
-
-  const confirmDeletePerson = useCallback(() => {
+  const handleAddPerson = (event) => {
+    event.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setPeople((prev) => addPerson(prev, trimmed));
+    setName('');
+  };
+  const handleAddGift = (personId, payload) => setPeople((prev) => addGiftIdea(prev, personId, payload));
+  const handleUpdateGift = (personId, giftId, payload) => setPeople((prev) => updateGiftIdea(prev, personId, giftId, payload));
+  const handleDeleteGift = (personId, giftId) => setPeople((prev) => removeGiftIdea(prev, personId, giftId));
+  const handleCycleGift = (personId, giftId) => setPeople((prev) => cycleGiftIdeaStatus(prev, personId, giftId));
+  const confirmDeletePerson = () => {
     if (!pendingDelete) return;
     setPeople((prev) => removePerson(prev, pendingDelete.id));
     setPendingDelete(null);
-  }, [pendingDelete]);
+  };
 
   const isLoading = loadStatus === 'loading';
 
@@ -91,12 +62,9 @@ export default function App() {
 
         <form className="add-person" onSubmit={handleAddPerson}>
           <input
-            className="add-person-input"
-            value={name}
+            className="add-person-input" value={name} maxLength={200}
             onChange={(event) => setName(event.target.value)}
-            maxLength={200}
-            placeholder="Add a person — e.g. Mom, Best Friend Jake…"
-            aria-label="New person name"
+            placeholder="Add a person — e.g. Mom, Best Friend Jake…" aria-label="New person name"
           />
           <button type="submit" className="btn btn-primary">Add person</button>
         </form>

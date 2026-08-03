@@ -1,8 +1,5 @@
 import { summarizeGifts } from '../domain/vault.js';
 
-/**
- * Per-person status summary, scannable even while the section is collapsed.
- */
 export default function SummaryBadges({ giftIdeas }) {
   const summary = summarizeGifts(giftIdeas);
   const label = `${summary.idea} ideas, ${summary.purchased} purchased, ${summary.given} given`;

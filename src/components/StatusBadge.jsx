@@ -1,10 +1,5 @@
 const LABELS = { idea: 'Idea', purchased: 'Purchased', given: 'Given' };
 
-/**
- * Colored status badge. When `onClick` is given it renders as a button that
- * advances the status (cycle interaction); otherwise a static label.
- */
-
 export default function StatusBadge({ status, onClick }) {
   const label = LABELS[status] || status;
 

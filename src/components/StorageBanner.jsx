@@ -1,10 +1,4 @@
-/**
- * Non-blocking banner that surfaces storage load/save problems. Different copy
- * per situation so the user can tell "your data was partly recovered" from
- * "nothing will be saved this session".
- */
 export default function StorageBanner({ loadStatus, saveBlocked }) {
-  /** @type {{ tone: string, text: string } | null} */
   let message = null;
 
   if (loadStatus === 'blocked') {

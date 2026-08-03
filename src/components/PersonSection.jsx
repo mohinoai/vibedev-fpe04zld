@@ -3,11 +3,6 @@ import SummaryBadges from './SummaryBadges.jsx';
 import GiftCard from './GiftCard.jsx';
 import GiftForm from './GiftForm.jsx';
 
-/**
- * Collapsible section for one person: header (name + summary + delete) plus a
- * collapsible body with the add-gift form and nested gift list. The summary
- * stays visible in the header even while collapsed.
- */
 export default function PersonSection({
   person,
   onAddGift,

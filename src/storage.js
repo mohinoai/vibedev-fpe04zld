@@ -1,32 +1,18 @@
 /**
- * @file localStorage persistence for the Gift Idea Vault.
- *
- * Reads/writes the full nested `Person[]` structure and distinguishes three
- * failure modes so the UI can react appropriately:
- *   - `corrupt`   — stored JSON is unparseable or the wrong shape (unrecoverable).
- *   - `recovered` — some entries were invalid and skipped (partial recovery).
- *   - `blocked`   — localStorage itself threw (private mode / quota / denied).
+ * @file localStorage persistence. Reads/writes the full nested `Person[]` and
+ * distinguishes failure modes: `corrupt` (unparseable / wrong shape),
+ * `recovered` (some entries dropped), `blocked` (localStorage threw).
  */
 
 import { normalizePeople } from './domain/vault.js';
 
-/** localStorage key. Versioned so a future schema change can migrate cleanly. */
+/** Versioned key so a future schema change can migrate cleanly. */
 export const STORAGE_KEY = 'gift-idea-vault:v1';
 
-/**
- * @typedef {'ok' | 'empty' | 'recovered' | 'corrupt' | 'blocked'} LoadStatus
- */
+/** @typedef {'ok' | 'empty' | 'recovered' | 'corrupt' | 'blocked'} LoadStatus */
+/** @typedef {{ people: import('./domain/vault.js').Person[], status: LoadStatus }} LoadResult */
 
-/**
- * @typedef {Object} LoadResult
- * @property {import('./domain/vault.js').Person[]} people
- * @property {LoadStatus} status
- */
-
-/**
- * Load and normalize the vault from storage.
- * @returns {LoadResult}
- */
+/** @returns {LoadResult} */
 export function loadPeople() {
   let raw;
   try {
@@ -49,13 +35,8 @@ export function loadPeople() {
 }
 
 /**
- * @typedef {{ ok: true } | { ok: false, error: 'blocked' }} SaveResult
- */
-
-/**
- * Persist the full people structure.
  * @param {import('./domain/vault.js').Person[]} people
- * @returns {SaveResult}
+ * @returns {{ ok: true } | { ok: false, error: 'blocked' }}
  */
 export function savePeople(people) {
   try {

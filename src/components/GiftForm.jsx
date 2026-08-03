@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { parsePrice } from '../domain/vault.js';
 
-/**
- * Controlled form for creating or editing a gift idea. Validates a required
- * title and an optional non-negative numeric price before calling `onSubmit`
- * with a clean payload. Cancelling leaves the source data untouched.
- */
 export default function GiftForm({ initial, onSubmit, onCancel, submitLabel = 'Add gift' }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [price, setPrice] = useState(
